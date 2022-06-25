@@ -1,0 +1,8 @@
+{
+    "name": "JIT",
+    "main": "",
+    "dependencies": {
+        "express": "latest",
+	"cors": "latest"
+    }
+}
