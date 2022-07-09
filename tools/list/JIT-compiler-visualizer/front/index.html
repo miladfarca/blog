@@ -57,6 +57,13 @@
               "https://en.wikipedia.org/wiki/Abstract_syntax_tree"
               target="_blank">Abstract Syntax Tree (AST)</a>.
             </li>
+            <li>Use <a href=
+            "https://github.com/miladfarca/arith-compiler/blob/master/src/peephole.c"
+              target="_blank">peephole optimization</a> to remove
+              unnecessary operations such as having <span class=
+              "badge bg-secondary">-2+2</span> in the middle of an
+              expression.
+            </li>
             <li>Reserve an executable memory location for holding
             machine instructions.</li>
             <li>Register allocation and Target Code Generation.
@@ -83,19 +90,13 @@
             string is very long).
             </li>
           </ul>
-          <ul>
-            <li>Optimization is an important and complex part of
-            compilers which we have not included in this project.
-            As a result unnecessary operations will not get omitted
-            (i.e. adding a number to zero).</li>
-          </ul>
           <div class="form-group">
             <label for="expression">Write an arithmetic expression,
             symbols include <span class=
             "badge bg-secondary">numbers, +, -, * , /, (, )</span>
             :</label> <input type="email" class="form-control mt-2"
             id="expression" maxlength="90" placeholder=
-            "example: 1+2+3">
+            "example: 1+2-2">
             <div class="alert alert-danger mt-2 m-w-500" role=
             "alert">
               Input is not valid!
@@ -113,7 +114,14 @@
             "https://en.wikipedia.org/wiki/Binary_tree" target=
             "_blank">Binary Tree</a>. Each interior node represents
             an operator. The children of the node represent the
-            operands of the operator.</p>
+            operands of the operator. Here is the tree without any
+            optimizations:</p>
+            <div class="py-1 bg-light">
+              <!-- graph -->
+              <div id="ast-no-opt-container" style=
+              "width:100%; height: 100%"></div>
+            </div>
+            <p>Here is the tree after (possible) optimizations:</p>
             <div class="py-1 bg-light">
               <!-- graph -->
               <div id="ast-container" style=
@@ -222,6 +230,16 @@
                 tokens = tokens.slice(0, -1).join(' , '); // -1 removes the last new line
                 $("#tokens-container").html(tokens);
             })
+            $.get(API_URL + "ast-no-opt/" + expression, function (ast) {
+                var ast_json_graph = {
+                    chart: {
+                        container: "#ast-no-opt-container"
+                    },
+                    nodeStructure: JSON.parse(ast)
+                };
+                var ast_chart = new Treant(ast_json_graph);
+            })
+
             $.get(API_URL + "ast/" + expression, function (ast) {
                 var ast_json_graph = {
                     chart: {

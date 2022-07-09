@@ -9,6 +9,8 @@ module.exports = function(app) {
         var type = req.params.type;
         if (type == "tokens") {
             flags = "--print-tokens --no-output";
+        } else if (type == "ast-no-opt") {
+            flags = "--print-ast-json --no-opt --no-output";
         } else if (type == "ast") {
             flags = "--print-ast-json --no-output";
         } else if (type == "registers") {
