@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for HTML5 for Linux version 5.6.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content=
+  "width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <title>miladfarca's blog | JIT compiler visualizer</title>
+  <!-- Favicon-->
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+  <!-- CSS-->
+  <link href="../../../../css/styles.css" rel="stylesheet">
+  <link rel="stylesheet" href=
+  "//unpkg.com/@highlightjs/cdn-assets@11.0.1/styles/default.min.css">
+  <link rel="stylesheet" href=
+  "https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.css">
+  <link rel="stylesheet" href="style.css"><!-- prism -->
+  <link rel="stylesheet" href=
+  "https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism.min.css">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+
+  <script async src=
+  "https://www.googletagmanager.com/gtag/js?id=G-T69QK2Z5SP"></script>
+  <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-T69QK2Z5SP');
+  </script>
+</head>
+<body>
+  <div class="container body-container tool-content mt-5 mb-5">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="page-content mb-5">
+          <h4>JIT compiler visualizer</h4>
+          <p class="mt-5">This is a <a href=
+          "https://github.com/miladfarca/arith-compiler" target=
+          "_blank">simple calculator</a> aiming to show how a
+          <strong>"Just in Time (JIT)" compiler</strong> works. Our
+          compiler has the following phases:</p>
+          <ol>
+            <li>We will start with Lexical Analysis. Input will be
+            turned into tokens, then we will parse them to make
+            sure they are syntactically correct.</li>
+            <li>Parse the tokens with a <a href=
+            "https://en.wikipedia.org/wiki/Recursive_descent_parser"
+              target="_blank">Recursive Decent</a> parser given our
+              <a href=
+              "https://github.com/miladfarca/arith-compiler/blob/master/src/parser.c"
+              target="_blank">context-free grammar</a> and create
+              an <a href=
+              "https://en.wikipedia.org/wiki/Abstract_syntax_tree"
+              target="_blank">Abstract Syntax Tree (AST)</a>.
+            </li>
+            <li>Use <a href=
+            "https://github.com/miladfarca/arith-compiler/blob/master/src/peephole.c"
+              target="_blank">peephole optimization</a> to remove
+              unnecessary operations such as having <span class=
+              "badge bg-secondary">2-2</span> in an expression.
+            </li>
+            <li>Reserve an executable memory location for holding
+            machine instructions.</li>
+            <li>Register allocation and Target Code Generation.
+            Traverse the AST using <a href=
+            "https://en.wikipedia.org/wiki/Tree_traversal#Depth-first_search_of_binary_tree"
+              target="_blank">Depth-first search, Post-order
+              traversal</a> and emit instructions into the reserved
+              memory.
+            </li>
+          </ol>
+          <p>Note:</p>
+          <ul>
+            <li>Emitted instructions are for 32 bit inputs.
+            Inputting larger integers will cause an overflow.</li>
+          </ul>
+          <ul>
+            <li>To keep the project simple, we have not included
+            any memory operations. We only rely on the available
+            machine registers. As a result <a href=
+            "https://en.wikipedia.org/wiki/Register_allocation"
+            target="_blank">Register Spilling</a> is not
+            implemented and compiler will simply exit if it runs
+            out of registers (this should only happen if the input
+            string is very long).
+            </li>
+          </ul>
+          <div class="form-group">
+            <label for="expression">Write an arithmetic expression,
+            symbols include <span class=
+            "badge bg-secondary">numbers, +, -, * , /, (, )</span>
+            :</label> <input type="email" class="form-control mt-2"
+            id="expression" maxlength="90" placeholder=
+            "example: 1+2-2">
+            <div class="alert alert-danger mt-2 m-w-500" role=
+            "alert">
+              Input is not valid!
+            </div><button onclick="execute()" type="submit" class=
+            "btn btn-primary mt-3">Calculate</button>
+          </div>
+          <div class="details-container">
+            <h5 class="mt-5">Tokens</h5>
+            <p>Note that commas are not part of the symbols and are
+            only used here to separate the tokens.</p>
+            <div class="py-1 bg-light p-l-10" id=
+            "tokens-container"></div>
+            <h5 class="mt-5">Abstract Syntax Tree (AST)</h5>
+            <p>Our AST is a <a href=
+            "https://en.wikipedia.org/wiki/Binary_tree" target=
+            "_blank">Binary Tree</a>. Each interior node represents
+            an operator. The children of the node represent the
+            operands of the operator. Here is the tree without any
+            optimizations:</p>
+            <div class="py-1 bg-light">
+              <!-- graph -->
+              <div id="ast-no-opt-container" style=
+              "width:100%; height: 100%"></div>
+            </div>
+            <p class="py-2">Here is the tree after (possible)
+            optimizations:</p>
+            <div class="py-1 bg-light">
+              <!-- graph -->
+              <div id="ast-container" style=
+              "width:100%; height: 100%"></div>
+            </div>
+            <h5 class="mt-5">Register Allocation</h5>
+            <p>To make sure divisions are accurate, we mainly use
+            <span class="badge bg-secondary">Floating Point</span>
+            registers and instructions. This way decimals will be
+            available for further calculations. The final result is
+            however turned into a fixed point integer.</p>
+            <pre class="gray-bg">
+<code id="registers-container" class="language-markup"></code>
+        </pre>
+            <h5 class="mt-5">Generated Instructions on x64</h5>
+            <p>We will traverse our AST from left to right.
+            Visiting each node will emit a machine instruction. If
+            node contains a value an instruction will load it into
+            a register, else it will be an operator and
+            instructions will be emitted to operate on its input
+            values. Instructions need to be encoded using the
+            <a href=
+            "https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-instruction-set-reference-manual-325383.pdf"
+            target="_blank">x64 ISA</a>. As an example <span class=
+            "badge bg-secondary">Floating Point Add (ADDSS)</span>
+            is encoded as <span class="badge bg-secondary">0xf3
+            0x0f 0x5c destination source</span> .</p>
+            <pre class="gray-bg">
+<code id="instructions-container" class="language-asm6502"></code>
+        </pre>
+            <h5 class="mt-5">Execution</h5>
+            <p>Above instructions are emitted into an executable
+            memory location. On UNIX like operating systems an
+            executable memory location can be requested using
+            <a href=
+            "https://man7.org/linux/man-pages/man2/mmap.2.html"
+            target="_blank">mmap</a>. Now all we have left is setup
+            a pointer to the first byte of the above memory
+            location and execute it, it will look like this in
+            <span class="badge bg-secondary">C</span>:</p>
+            <pre class="gray-bg">
+<code class="language-c">
+    int (*function_pointer)() = (void *)(pointer_to_our_reserved_memory);
+    int result = (*function_pointer)();
+</code>
+            </pre>
+            <h5 class="mt-5">Result</h5>
+            <div class="py-1 bg-light p-l-10" id=
+            "result-container"></div>
+          </div>
+        </div><!-- JS-->
+        <script src=
+        "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <script src=
+        "https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+        <script src=
+        "https://unpkg.com/showdown/dist/showdown.min.js"></script>
+        
+        <script src=
+        "//unpkg.com/@highlightjs/cdn-assets@11.0.1/highlight.min.js"></script>
+        
+        <script src=
+        "https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+        
+        <script src=
+        "https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.js"></script>
+        
+        <script src=
+        "https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.js"></script>
+        
+        <script src=
+        "https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-core.min.js"></script>
+        
+        <script src=
+        "https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/plugins/autoloader/prism-autoloader.min.js"></script>
+        
+        <script src="../../../../js/scripts.js"></script>
+      </div>
+    </div>
+  </div>
+  <script>
+    var API_URL = "https://threeqa1c9dgww.onrender.com/jit/";
+    // page functions
+    var execute = function () {
+        var expression = $("#expression").val().trim();
+        var is_valid = false;
+        // make sure input is valid
+        try {
+            is_valid = !isNaN(eval(expression));
+        } catch (e) { }
+        // cannot start with +
+        if (expression.lastIndexOf("+", 0) === 0) {
+            is_valid = false;
+        }
+        // no decimals
+        if (expression.indexOf(".") != -1) {
+            is_valid = false;
+        }
+        if (is_valid) {
+            $(".alert").css("display", "none");
+            $(".details-container").css("display", "block");
+            expression = btoa(expression);
+            $.get(API_URL + "tokens/" + expression, function (tokens) {
+                tokens = tokens.split("\n");
+                tokens = tokens.slice(0, -1).join(' , '); // -1 removes the last new line
+                $("#tokens-container").html(tokens);
+            })
+            $.get(API_URL + "ast-no-opt/" + expression, function (ast) {
+                var ast_json_graph = {
+                    chart: {
+                        container: "#ast-no-opt-container"
+                    },
+                    nodeStructure: JSON.parse(ast)
+                };
+                var ast_chart = new Treant(ast_json_graph);
+            })
+
+            $.get(API_URL + "ast/" + expression, function (ast) {
+                var ast_json_graph = {
+                    chart: {
+                        container: "#ast-container"
+                    },
+                    nodeStructure: JSON.parse(ast)
+                };
+                var ast_chart = new Treant(ast_json_graph);
+            })
+            $.get(API_URL + "registers/" + expression, function (registers) {
+                registers = registers.split("\n");
+                registers = registers.slice(0, -1).join("\n"); // -1 removes the last new line
+                $("#registers-container").html(registers);
+                Prism.highlightAll();
+            })
+            $.get(API_URL + "x64/" + expression, function (instructions) {
+
+                instructions = instructions.split("\n");
+                instructions.splice(0, 3);  // clear the first 3 lines
+                instructions = instructions.slice(0, -1).join("\n"); // -1 removes the last new line
+                $("#instructions-container").html(instructions);
+                Prism.highlightAll();
+            })
+            $.get(API_URL + "result/" + expression, function (result) {
+                $("#result-container").html(result);
+            })
+        }
+        else {
+            $(".alert").css("display", "block");
+        }
+    }
+  create_navbar(true);
+  create_footer();
+  </script>
+</body>
+</html>
