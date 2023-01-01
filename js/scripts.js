@@ -70,7 +70,7 @@ var create_footer =
         var footer = `
     <footer class="py-5 bg-dark">
         <div class="container">
-            <p class="m-0 text-center text-white">Copyright &copy; miladfarca.github.io 2022</p>
+            <p class="m-0 text-center text-white">Copyright &copy; miladfarca.github.io 2023</p>
         </div>
     </footer>
 `;
