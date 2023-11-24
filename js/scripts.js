@@ -6,36 +6,36 @@ var IFRAME_HEIGHT = 0;
 
 // initial setup steps
 showdown.extension('highlight', function() {
-    function htmlunencode(text) {
-        return (
-            text
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-        );
+  function htmlunencode(text) {
+    return (
+      text
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+    );
+  }
+  return [{
+    type: 'output',
+    filter: function(text, converter, options) {
+      // use new shodown's regexp engine to conditionally parse codeblocks
+      var left = '<pre><code\\b[^>]*>',
+        right = '</code></pre>',
+        flags = 'g',
+        replacement = function(wholeMatch, match, left, right) {
+          // unescape match to prevent double escaping
+          left = left.slice(0, 18) + 'hljs ' + left.slice(18);
+          match = htmlunencode(match);
+          return left + hljs.highlightAuto(match).value + right;
+        };
+      return showdown.helper.replaceRecursiveRegExp(text, replacement, left, right, flags);
     }
-    return [{
-        type: 'output',
-        filter: function(text, converter, options) {
-            // use new shodown's regexp engine to conditionally parse codeblocks
-            var left = '<pre><code\\b[^>]*>',
-                right = '</code></pre>',
-                flags = 'g',
-                replacement = function(wholeMatch, match, left, right) {
-                    // unescape match to prevent double escaping
-                    left = left.slice(0, 18) + 'hljs ' + left.slice(18);
-                    match = htmlunencode(match);
-                    return left + hljs.highlightAuto(match).value + right;
-                };
-            return showdown.helper.replaceRecursiveRegExp(text, replacement, left, right, flags);
-        }
-    }];
+  }];
 });
 
 var create_navbar =
-    function(tools_active) {
-        var tools_class = tools_active ? "active" : "";
-        var nav = `
+  function(tools_active) {
+    var tools_class = tools_active ? "active" : "";
+    var nav = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/blog/">miladfarca's blog</a>
@@ -45,7 +45,7 @@ var create_navbar =
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                          <li class="nav-item"><a class="nav-link ` +
-            tools_class + `" href="/blog/tools">Tools</a></li>
+      tools_class + `" href="/blog/tools">Tools</a></li>
                 </ul>
                 <ul class="nav">
                     <!--<li class="nav-item"><a class="nav-link" href="#!">About</a></li>
@@ -62,180 +62,180 @@ var create_navbar =
         </div>
     </nav>
 `;
-        $("body").prepend(nav);
-    }
+    $("body").prepend(nav);
+  }
 
 var create_footer =
-    function() {
-        var footer = `
+  function() {
+    var footer = `
     <footer class="py-5 bg-dark">
         <div class="container">
             <p class="m-0 text-center text-white">Copyright &copy; miladfarca.github.io 2023</p>
         </div>
     </footer>
 `;
-        $("body").append(footer);
-    }
+    $("body").append(footer);
+  }
 
 var clean_title =
-    function(title) {
-        var list = title.split("-");
-        list.shift();
-        list = list.join(" ");
-        return list.charAt(0).toUpperCase() + list.slice(1);
-    }
+  function(title) {
+    var list = title.split("-");
+    list.shift();
+    list = list.join(" ");
+    return list.charAt(0).toUpperCase() + list.slice(1);
+  }
 
 var get_card_content =
-    function(url, index, callback) {
-        var holder = document.createElement("div");
-        $.get(url, function(data) {
-            // remove any html tags
-            $(holder).html(data);
-            var text = $(holder).text();
-            text = text.replace(/\n|\r/g, " ");
-            text = text.replaceAll(/#/g, "");
-            text = text.replaceAll(/  /g, " ");
-            if (text.charAt(0) == ' ') {
-                text = text.substring(1);
-            }
-            if (callback) {
-                callback(text, index);
-            }
-        })
-    }
+  function(url, index, callback) {
+    var holder = document.createElement("div");
+    $.get(url, function(data) {
+      // remove any html tags
+      $(holder).html(data);
+      var text = $(holder).text();
+      text = text.replace(/\n|\r/g, " ");
+      text = text.replaceAll(/#/g, "");
+      text = text.replaceAll(/  /g, " ");
+      if (text.charAt(0) == ' ') {
+        text = text.substring(1);
+      }
+      if (callback) {
+        callback(text, index);
+      }
+    })
+  }
 
 var get_post_content =
-    function(title) {
-        // add the "md" part
-        title += ".md";
-        var url = DOWNLOAD_URL + title;
-        $.get(
-            url,
-            function(data) {
-                // convert md to html
-                var converter = new showdown.Converter({
-                        extensions: ['highlight']
-                    }),
-                    text = data,
-                    html = converter.makeHtml(text);
-                // append breadcrumb, remove the first part and .md
-                title = title.substring(2).replaceAll(".md", "");
-                var breadcrumb = `<nav aria-label="breadcrumb">
+  function(title) {
+    // add the "md" part
+    title += ".md";
+    var url = DOWNLOAD_URL + title;
+    $.get(
+      url,
+      function(data) {
+        // convert md to html
+        var converter = new showdown.Converter({
+            extensions: ['highlight']
+          }),
+          text = data,
+          html = converter.makeHtml(text);
+        // append breadcrumb, remove the first part and .md
+        title = title.substring(2).replaceAll(".md", "");
+        var breadcrumb = `<nav aria-label="breadcrumb">
                             <ol class="breadcrumb">
                                 <li class="breadcrumb-item"><a href="./">Home</a></li>
                                 <li class="breadcrumb-item active" aria-current="page">` + title + `</li>
                             </ol>
                         </nav>`;
-                $(".page-content").append(breadcrumb);
-                $(".page-content").append(html);
-            })
-    }
+        $(".page-content").append(breadcrumb);
+        $(".page-content").append(html);
+      })
+  }
 
 var create_post_cards =
-    function(list) {
-        for (var i = 0; i < list.length; i++) {
-            var title = list[i].name;
-            // make sure it's an md file.
-            if (title.indexOf(".md") != -1) {
-                var url = DOWNLOAD_URL + title;
-                // remove the "md" part
-                title = title.replace(".md", "");
-                card = `<div class="card mb-4">
+  function(list) {
+    for (var i = 0; i < list.length; i++) {
+      var title = list[i].name;
+      // make sure it's an md file.
+      if (title.indexOf(".md") != -1) {
+        var url = DOWNLOAD_URL + title;
+        // remove the "md" part
+        title = title.replace(".md", "");
+        card = `<div class="card mb-4">
                     <div class="card-body">
                         <h2 class="card-title one-line-ellipsis h4">` +
-                    clean_title(title) + `</h2>
+          clean_title(title) + `</h2>
                         <div class="spinner-grow" role="status">
                             <span class="sr-only"></span>
                         </div>
                         <p class="card-text one-line-ellipsis post-content-` +
-                    i + `"></p>
+          i + `"></p>
                         <a class="btn btn-primary" href="?post=` +
-                    encodeURI(title) + `">Read more →</a>
+          encodeURI(title) + `">Read more →</a>
                     </div>
                 </div>`;
-                $(".page-content").append(card);
-                // add the card body.
-                get_card_content(url, i, function(text, index) {
-                    // remove spinner.
-                    $(".post-content-" + index).parent().find(".spinner-grow").remove();
-                    $(".post-content-" + index).html(text);
-                })
-            }
-        }
+        $(".page-content").append(card);
+        // add the card body.
+        get_card_content(url, i, function(text, index) {
+          // remove spinner.
+          $(".post-content-" + index).parent().find(".spinner-grow").remove();
+          $(".post-content-" + index).html(text);
+        })
+      }
     }
+  }
 
 var create_tool_cards =
-    function(list) {
-        for (var i = 0; i < list.length; i++) {
-            var card = `<div class="card mb-4">
+  function(list) {
+    for (var i = 0; i < list.length; i++) {
+      var card = `<div class="card mb-4">
                     <div class="card-body">
                         <h2 class="card-title one-line-ellipsis h4">` +
-                list[i].name + `</h2>
+        list[i].name + `</h2>
                         <p class="card-text one-line-ellipsis">` +
-                list[i].info + `</p>
+        list[i].info + `</p>
                         <a class="btn btn-primary" href="` +
-                list[i].url + `">View tool</a>
+        list[i].url + `">View tool</a>
                     </div>
                 </div>`;
-            $(".page-content").append(card);
-        }
+      $(".page-content").append(card);
     }
+  }
 
 var get_post_list =
-    function() {
-        $.get(API_URL, function(data) {
-            if (data) {
-                // reverse the array, newest post comes first
-                data = data.reverse();
-                create_post_cards(data);
-            }
-        })
-    }
+  function() {
+    $.get(API_URL, function(data) {
+      if (data) {
+        // reverse the array, newest post comes first
+        data = data.reverse();
+        create_post_cards(data);
+      }
+    })
+  }
 
 var get_search_result =
-    function(query) {
-        var url = SEARCH_URL + query + "+repo:" + BLOG_NAME;
-        // append search query
-        var alert = `<div class="alert alert-primary" role="alert">
+  function(query) {
+    var url = SEARCH_URL + query + "+repo:" + BLOG_NAME;
+    // append search query
+    var alert = `<div class="alert alert-primary" role="alert">
                     <b>Search: </b>` +
-            query + `
+      query + `
                 </div>`;
-        $(".page-content").append(alert);
-        $.get(url, function(data) {
-            if (data && data.items && data.items.length > 0) {
-                create_post_cards(data.items);
-            }
-        });
-    }
+    $(".page-content").append(alert);
+    $.get(url, function(data) {
+      if (data && data.items && data.items.length > 0) {
+        create_post_cards(data.items);
+      }
+    });
+  }
 
 var search_handler =
-    function() {
-        var query = $("#search-input").val();
-        location.href = "?search=" + query;
-    }
+  function() {
+    var query = $("#search-input").val();
+    location.href = "?search=" + query;
+  }
 
 var init_blog =
-    function() {
-        // check if we need to display a blog or lis of them or search result
-        var q = window.location.search;
-        if (q != "") {
-            var type = q.split("=")[0];
-            q = q.split("=")[1];
-            $(".page-content").html("");
-            // if search
-            if (type.indexOf("search") != -1) {
-                get_search_result(q);
-            }
-            // post content
-            else {
-                get_post_content(q);
-            }
-        } else {
-            $(".page-content").html("");
-            get_post_list();
-        }
+  function() {
+    // check if we need to display a blog or lis of them or search result
+    var q = window.location.search;
+    if (q != "") {
+      var type = q.split("=")[0];
+      q = q.split("=")[1];
+      $(".page-content").html("");
+      // if search
+      if (type.indexOf("search") != -1) {
+        get_search_result(q);
+      }
+      // post content
+      else {
+        get_post_content(q);
+      }
+    } else {
+      $(".page-content").html("");
+      get_post_list();
     }
+  }
 
 var init_tools = function(tools_list) {
-    create_tool_cards(tools_list);
+  create_tool_cards(tools_list);
 }
