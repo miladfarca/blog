@@ -195,6 +195,8 @@ var init_blog =
   function() {
     var q = window.location.search;
     if (q != "") {
+      var type = q.split("=")[0];
+      q = q.split("=")[1];
       $(".page-content").html("");
       get_post_content(q);
     } else {
