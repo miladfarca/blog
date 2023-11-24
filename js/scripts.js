@@ -1,7 +1,6 @@
 var BLOG_NAME = "miladfarca/blog-posts";
 var API_URL = "https://api.github.com/repos/" + BLOG_NAME + "/contents/";
 var DOWNLOAD_URL = "https://raw.githubusercontent.com/" + BLOG_NAME + "/main/";
-var SEARCH_URL = "https://api.github.com/search/code?q=";
 var IFRAME_HEIGHT = 0;
 
 // initial setup steps
@@ -192,40 +191,13 @@ var get_post_list =
     })
   }
 
-var get_search_result =
-  function(query) {
-    var url = SEARCH_URL + query + "+repo:" + BLOG_NAME;
-    // append search query
-    var alert = `<div class="alert alert-primary" role="alert">
-                    <b>Search: </b>` +
-      query + `
-                </div>`;
-    $(".page-content").append(alert);
-    $.get(url, function(data) {
-      if (data && data.items && data.items.length > 0) {
-        create_post_cards(data.items);
-      }
-    });
-  }
-
-var search_handler =
-  function() {
-    var query = $("#search-input").val();
-    location.href = "?search=" + query;
-  }
-
 var init_blog =
   function() {
-    // check if we need to display a blog or lis of them or search result
     var q = window.location.search;
     if (q != "") {
       var type = q.split("=")[0];
       q = q.split("=")[1];
       $(".page-content").html("");
-      // if search
-      if (type.indexOf("search") != -1) {
-        get_search_result(q);
-      }
       // post content
       else {
         get_post_content(q);
